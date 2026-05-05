@@ -9,5 +9,5 @@ echo json_encode([
         : null,
     'request_method' => $_SERVER['REQUEST_METHOD'] ?? null,
     'request_url' => $_SERVER['REQUEST_URI'] ?? null,
+    'headers' => getallheaders(),
 ]);
-
