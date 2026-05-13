@@ -10,6 +10,6 @@ echo json_encode([
     'request_url' => $_SERVER['REQUEST_URI'] ?? null,
     'request_ip' => $_SERVER['REMOTE_ADDR'] ?? null,
     'headers' => getallheaders(),
-    'query_params' => $_GET ?? [],
+    'query_params' => $_GET,
     'body_data_raw' => $body_data_raw,
 ]);
