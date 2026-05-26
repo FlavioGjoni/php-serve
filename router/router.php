@@ -1,22 +1,8 @@
 <?php
 
-use App\Controller\AllController;
-use App\Controller\JwtController;
-use FastRoute\RouteCollector;
+global $dispatcher;
 
-$dispatcher = FastRoute\simpleDispatcher(function (RouteCollector $r) {
-    // jwt
-    $r->addRoute('GET', '/jwt', function () {
-        new JwtController()->index();
-    });
-
-    // any route
-    foreach (['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as $method) {
-        $r->addRoute($method, '/{any:.*}', function () {
-            new AllController()->index();
-        });
-    }
-});
+require_once __DIR__ . '/dispatcher.php';
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 $uri = $_SERVER['REQUEST_URI'];
@@ -29,6 +15,7 @@ if (false !== $pos = strpos($uri, '?')) {
 $uri = rawurldecode($uri);
 
 // trigger
+/** @var FastRoute\Dispatcher $dispatcher */
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
 // handle route
