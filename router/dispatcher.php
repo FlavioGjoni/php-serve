@@ -4,6 +4,7 @@ use App\Controller\AllController;
 use App\Controller\JwtCompareController;
 use App\Controller\JwtController;
 use App\Controller\JwtFinalController;
+use App\Controller\JwtGenerateTokenController;
 use FastRoute\RouteCollector;
 
 $dispatcher = FastRoute\simpleDispatcher(function (RouteCollector $r) {
@@ -20,6 +21,11 @@ $dispatcher = FastRoute\simpleDispatcher(function (RouteCollector $r) {
     // /jwt/final
     $r->addRoute('GET', '/jwt/final', function () {
         new JwtFinalController()->index();
+    });
+
+    // /jwt/generate-token
+    $r->addRoute('POST', '/jwt/generate-token', function () {
+        new JwtGenerateTokenController()->index();
     });
 
     // any route
