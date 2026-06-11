@@ -22,6 +22,8 @@ class JwtGenerateTokenController {
 
     protected array $request_data = [];
 
+    protected array $claims = [];
+
     protected array $jwt_info = [
         'jwt' => null,
         'key_id' => null,
@@ -78,7 +80,12 @@ class JwtGenerateTokenController {
             return false;
         }
 
-        // g. no errors
+        // g. custom claims
+        if ($this->validate_simple_string('scope', false)) {
+            $this->claims['scope'] = $this->request_data['scope'];
+        }
+
+        // h. no errors
         return true;
     }
 
@@ -97,15 +104,21 @@ class JwtGenerateTokenController {
         // time now
         $now = new DateTimeImmutable();
 
-        $token = $config->builder()
+        $builder = $config->builder()
             ->withHeader('kid', $this->request_data['key_id'])
             ->issuedBy($this->request_data['issuer'])
             ->permittedFor($this->request_data['audience'])
             ->issuedAt($now)
             ->canOnlyBeUsedAfter($now)
             ->expiresAt($now->modify("+{$this->request_data['ttl']} seconds"))
-            ->identifiedBy(bin2hex(random_bytes(16)))
-            ->getToken($config->signer(), $config->signingKey());
+            ->identifiedBy(bin2hex(random_bytes(16)));
+
+        // claims
+        foreach ($this->claims as $name => $claim) {
+            $builder = $builder->withClaim($name, $claim);
+        }
+
+        $token = $builder->getToken($config->signer(), $config->signingKey());
 
         $jwt = $token->toString();
 
@@ -117,16 +130,25 @@ class JwtGenerateTokenController {
             'ttl' => $this->request_data['ttl'],
             'expires_at' => $now->modify("+{$this->request_data['ttl']} seconds"),
         ];
+
+        // claims
+        $this->jwt_info = [...$this->jwt_info, ...$this->claims];
     }
 
-    protected function validate_simple_string(string $input_name): void {
-        if (!$this->validate_input_required($input_name)) {
-            return;
+    protected function validate_simple_string(string $input_name, bool $registerError = true): bool {
+        if (!$this->validate_input_required($input_name, $registerError)) {
+            return false;
         }
 
         if (!preg_match('/^[a-z0-9-]+$/', $this->request_data[$input_name])) {
-            $this->response['errors'][$input_name] = "Input contains invalid characters - $input_name";
+            if ($registerError) {
+                $this->response['errors'][$input_name] = "Input contains invalid characters - $input_name";
+            }
+
+            return false;
         }
+
+        return true;
     }
 
     protected function validate_ttl(string $input_name): void {
@@ -139,9 +161,12 @@ class JwtGenerateTokenController {
         }
     }
 
-    protected function validate_input_required(string $input_name): bool {
+    protected function validate_input_required(string $input_name, bool $registerError = true): bool {
         if (!isset($this->request_data[$input_name])) {
-            $this->response['errors'][$input_name] = "Input required - $input_name";
+            if ($registerError) {
+                $this->response['errors'][$input_name] = "Input required - $input_name";
+            }
+
             return false;
         }
 
