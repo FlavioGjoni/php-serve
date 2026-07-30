@@ -1,10 +1,8 @@
 <?php
 
-global $dispatcher;
+$dispatcher = require __DIR__ . '/dispatcher.php';
 
-require_once __DIR__ . '/dispatcher.php';
-
-$httpMethod = $_SERVER['REQUEST_METHOD'];
+$http_method = $_SERVER['REQUEST_METHOD'];
 $uri = $_SERVER['REQUEST_URI'];
 
 // strip query string
@@ -16,11 +14,11 @@ $uri = rawurldecode($uri);
 
 // trigger
 /** @var FastRoute\Dispatcher $dispatcher */
-$routeInfo = $dispatcher->dispatch($httpMethod, $uri);
+$route_info = $dispatcher->dispatch($http_method, $uri);
 
 // handle route
 header('Content-Type: application/json');
-switch ($routeInfo[0]) {
+switch ($route_info[0]) {
     case FastRoute\Dispatcher::NOT_FOUND:
         http_response_code(404);
         echo json_encode(['error' => 'Route not Found']);
@@ -32,8 +30,8 @@ switch ($routeInfo[0]) {
         break;
 
     case FastRoute\Dispatcher::FOUND:
-        $handler = $routeInfo[1];
-        $vars = $routeInfo[2];
+        $handler = $route_info[1];
+        $vars = $route_info[2];
 
         call_user_func($handler, $vars);
         break;
