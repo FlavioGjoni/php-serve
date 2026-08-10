@@ -5,6 +5,7 @@ use App\Controller\JwtCompareController;
 use App\Controller\JwtController;
 use App\Controller\JwtFinalController;
 use App\Controller\JwtGenerateTokenController;
+use App\Controller\ProtoStructController;
 
 return [
     [
@@ -36,10 +37,17 @@ return [
         }
     ],
     [
+        'method' => 'post',
+        'route' => '/proto/struct',
+        'handler' => function () {
+            new ProtoStructController()->index();
+        }
+    ],
+    [
         'method' => ['get', 'post', 'put', 'patch', 'delete', 'options'],
         'route' => '/{any:.*}',
         'handler' => function () {
             new AllController()->index();
         }
-    ]
+    ],
 ];
