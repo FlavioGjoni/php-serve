@@ -10,6 +10,7 @@ use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Random\RandomException;
+use Throwable;
 
 class JwtGenerateTokenController {
 
@@ -38,12 +39,11 @@ class JwtGenerateTokenController {
      * @throws RandomException
      */
     public function index(): void {
-        if (!$this->validate_inputs()) {
+        if (!$this->validate_inputs() || !$this->generate_token()) {
             ResponseHandler::json_response($this->response, $this->httpCode);
             return;
         }
 
-        $this->generate_token();
         $this->response['success'] = true;
         ResponseHandler::json_response([...$this->response, 'jwt_info' => $this->jwt_info], $this->httpCode);
     }
@@ -93,14 +93,26 @@ class JwtGenerateTokenController {
      * @throws DateMalformedStringException
      * @throws RandomException
      */
-    protected function generate_token(): void {
+    protected function generate_token(): bool {
         // token handler
-        $config = Configuration::forAsymmetricSigner(
-            new Sha256(),
-            InMemory::file(__DIR__ . '/../../jwt-keys/generate_token/private.pem'),
-            InMemory::file(__DIR__ . '/../../jwt-keys/generate_token/public.pem')
-        );
+        $config = $this->get_token_config();
 
+        try {
+            $this->do_generate_token($config);
+            return true;
+        } catch (Throwable $e) {
+            $this->response['message'] = $e->getMessage();
+            $this->response['trace'] = $e->getTrace();
+            $this->httpCode = 422;
+            return false;
+        }
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     * @throws RandomException
+     */
+    protected function do_generate_token(Configuration $config): void {
         // time now
         $now = new DateTimeImmutable();
 
@@ -133,6 +145,28 @@ class JwtGenerateTokenController {
 
         // claims
         $this->jwt_info = [...$this->jwt_info, ...$this->claims];
+    }
+
+    protected function get_token_config(): Configuration {
+        // expect public_key and private_key values
+        if (
+            empty($this->request_data['public_key'])
+            || !is_string($this->request_data['public_key'])
+            || empty($this->request_data['private_key'])
+            || !is_string($this->request_data['private_key'])
+        ) {
+            return Configuration::forAsymmetricSigner(
+                new Sha256(),
+                InMemory::file(__DIR__ . '/../../jwt-keys/generate_token/private.pem'),
+                InMemory::file(__DIR__ . '/../../jwt-keys/generate_token/public.pem')
+            );
+        }
+
+        return Configuration::forAsymmetricSigner(
+            new Sha256(),
+            InMemory::plainText($this->request_data['private_key']),
+            InMemory::plainText($this->request_data['public_key']),
+        );
     }
 
     protected function validate_simple_string(string $input_name, bool $registerError = true): bool {
