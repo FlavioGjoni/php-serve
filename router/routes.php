@@ -5,6 +5,7 @@ use App\Controller\JwtCompareController;
 use App\Controller\JwtController;
 use App\Controller\JwtFinalController;
 use App\Controller\JwtGenerateTokenController;
+use App\Controller\JwtGenerateTokenJsonKeysController;
 use App\Controller\ProtoStructController;
 
 return [
@@ -34,6 +35,13 @@ return [
         'route' => '/jwt/generate-token',
         'handler' => function () {
             new JwtGenerateTokenController()->index();
+        }
+    ],
+    [
+        'method' => 'post',
+        'route' => '/jwt/generate-token/json-keys',
+        'handler' => function () {
+            new JwtGenerateTokenJsonKeysController()->index();
         }
     ],
     [
