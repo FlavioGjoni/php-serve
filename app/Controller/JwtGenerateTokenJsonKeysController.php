@@ -5,10 +5,12 @@ namespace App\Controller;
 use App\Services\InputValidator;
 use App\Services\RequestJsonParser;
 use App\Services\ResponseHandler;
+use DateMalformedStringException;
 use DateTimeImmutable;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
+use Random\RandomException;
 use Throwable;
 
 class JwtGenerateTokenJsonKeysController {
@@ -95,6 +97,10 @@ class JwtGenerateTokenJsonKeysController {
         }
     }
 
+    /**
+     * @throws DateMalformedStringException
+     * @throws RandomException
+     */
     protected function generate_token(array $jwt_key_set): string {
         $config = Configuration::forAsymmetricSigner(
             new Sha256(),
